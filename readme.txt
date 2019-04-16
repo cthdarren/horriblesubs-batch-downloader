@@ -1,4 +1,4 @@
-To execute the script, python 3.7.3 is required
+To execute the script, python 3.7.x is required
 
 Create a virtual environment within your directory 
 "python -m venv <directory>"
