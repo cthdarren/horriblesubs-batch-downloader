@@ -2,15 +2,14 @@ import os
 import requests
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 from bs4 import BeautifulSoup
 
 nameList = []
 hrefStrings = ""
 linksDict = {}
 quality = ""
-finalLoad = ""
 landingurl = "https://horriblesubs.info/"
-episodeList = []
 
 
 #==========
@@ -22,8 +21,8 @@ main.geometry("510x190")
 main.resizable(True, True)
 app = tk.Frame(main)
 app.grid()
-ttk.Button(main, text="Download").grid(row = 4, column = 0, sticky = "E")
-
+dlButton = ttk.Button(main, text="Download")
+dlButton.grid(row = 4, column = 0, sticky = "E")
 
 #======================================
 #Extracting series' links from page
@@ -56,23 +55,6 @@ dropDown = ttk.Combobox(app, width = 66, textvariable = dropVar, values = nameLi
 dropDown.grid(column = 1, row = 0)
 
 
-#==================================================================================
-# Obtaining showid value from wepage in order to query API to obtain magnet link  
-#==================================================================================
-chosenAnime = nameList[347]
-
-url = "https://horriblesubs.info" + str(linksDict.get("Absolute Duo"))
-
-showsoup = BeautifulSoup(requests.get(url).text, features="html.parser")
-
-scriptList = showsoup.find_all("script")
-
-for tag in scriptList:
-	if "hs_showid" in tag.text:
-		showid = tag.text[16:-1]
-
-
-
 #===================
 #Quality Dropdown
 #===================
@@ -84,11 +66,36 @@ qualityDrop = ttk.Combobox(app, textvariable=qualityVar, values=["1080p", "720p"
 qualityDrop.grid(row = 1, column = 1, sticky="W")
 
 
+#==================================================================================
+# Obtaining showid value from wepage in order to query API to obtain magnet link  
+#==================================================================================
+def getShowID():
+	url = "https://horriblesubs.info" + str(linksDict.get(dropVar.get()))
+
+	showsoup = BeautifulSoup(requests.get(url).text, features="html.parser")
+
+	scriptList = showsoup.find_all("script")
+
+	for tag in scriptList:
+		if "hs_showid" in tag.text:
+			return tag.text[16:-1]
+
+	return false
+			 
+
+
+
 #======================================================
 #Loading the whole page by doing all API calls
 #======================================================
-def loadDynamicElements():
+def loadPage(*args):
+	finalLoad = ""
 	nextid = 0
+	showid = getShowID()
+
+	if not showid:
+		messagebox.showerror("Error", "Invalid Series Name!!")
+
 	apiLink = "api.php?method=getshows&type=show&showid=" + showid
 	while True:
 		loadedPage = requests.get(landingurl + apiLink + "&nextid=" + str(nextid))
@@ -99,18 +106,22 @@ def loadDynamicElements():
 		finalLoad += loadedPage.text
 		nextid += 1
 
-	loadedSoup = BeautifulSoup(finalLoad,features="html.parser")
+	return BeautifulSoup(finalLoad,features="html.parser")
+
+def loadEpisodes(*args):
+	episodeList = []
+	quality = loadQuality()
+	
+	loadedSoup = loadPage()
 
 
-#======================================================
-#Checks for number of episodes for the given series
-#======================================================
-def loadEpisodes():
+	#======================================================
+	#Checks for number of episodes for the given series
+	#======================================================
 	for episodes in loadedSoup.find_all(class_="rls-info-container"):
-		episodeList.append(episodes["id"])
+		episodeList.append(str(episodes["id"]))
 
-	lastEp = episodeList[0]
-	firstEp = episodeList[-1]
+	episodeList.reverse()
 
 
 	#==============================
@@ -119,28 +130,58 @@ def loadEpisodes():
 	label3 = ttk.Label(app, text="Start Episode:")
 	label3.grid(row = 2, column = 0, pady = 10, sticky = "W")
 	sEpVar = tk.StringVar()
-	sEpVar.set(firstEp)
+	sEpVar.set(str(episodeList[0]))
 	sEpDrop = ttk.Combobox(app, textvariable=sEpVar, values=episodeList, width=6, state="readonly")
 	sEpDrop.grid(row = 2, column = 1, sticky="W")
 
 	label4 = ttk.Label(app, text="End Episode:")
 	label4.grid(row = 3, column = 0, pady = 10, sticky = "W")
 	eEpVar = tk.StringVar()
-	eEpVar.set(lastEp)
+	eEpVar.set(str(episodeList[-1]))
 	eEpDrop = ttk.Combobox(app, textvariable=eEpVar, values=episodeList, width=6, state="readonly")
 	eEpDrop.grid(row = 3, column = 1, sticky="W")
 
+	if checkBatch():
+		displayBatchDownload()
 
+
+def loadQuality(*args):
+	return qualityVar.get()
+
+
+def checkBatch(*args):
+	showid = getShowID()
+	apiLink = "api.php?method=getshows&type=batch&showid=" + showid
+	batchPage = requests.get(landingurl + apiLink)
+
+	if "href" in batchPage:
+		return True
+
+	return False
+
+
+def displayBatchDownload():
+	batchButton = ttk.Button(main, text="Batch Download", width=20)
+	batchButton.grid(row = 3, column = 0, sticky = "E")
+
+def qualityCheck():
+	return
 #======================================================
 #Obtaining magnet links from API call and execution
 #======================================================
-def executeMagnetLinks():
-	
+def executeMagnetLinks(event):
+	quality = loadQuality()
+	loadedSoup = loadPage()
 
 	for span in loadedSoup.find_all(class_="link-" + quality):
-		for x in span.find_all(class_="hs-magnet-link"):
-			for y in x.find_all("a", href=True):
-				# os.startfile(str(y["href"]))
+		for magnets in span.find_all(class_="hs-magnet-link"):
+			for aTags in magnets.find_all("a", href=True):
+				print("Success!")
+				# os.startfile(str(aTags["href"]))
 				break
 	
+dropVar.trace_add("write", loadEpisodes)
+qualityVar.trace_add("write", loadQuality)
+dlButton.bind("<Button-1>", executeMagnetLinks)
+
 main.mainloop()
