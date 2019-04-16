@@ -1,7 +1,6 @@
 import os
 import requests
 from bs4 import BeautifulSoup
-import time
 
 nameList = []
 hrefStrings = ""
@@ -19,21 +18,19 @@ for div in soup.find_all(class_="shows-wrapper"):
 	for line in aTags:
 		linksDict[line.text] = line['href']
 
-#choose by dropdown, chose name
+#Please enter your desired anime name here
 chosenAnime = "Sword Art Online – Alicization"
 
 url = "https://horriblesubs.info" + linksDict.get(chosenAnime)
 
-# req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.3'})
-
-# chosenPage = urllib.request.urlopen(req)
+#or uncomment the line below and enter the url to the show here 
+#url = https://horriblesubs.info/shows/sword-art-online-alicization/")
 
 showsoup = BeautifulSoup(requests.get(url).text, features="html.parser")
 
 scriptList = showsoup.find_all("script")
 
 for tag in scriptList:
-	# print(tag.text)
 	if "hs_showid" in tag.text:
 		showid = tag.text[16:-1]
 
@@ -41,7 +38,6 @@ for tag in scriptList:
 apiLink = "api.php?method=getshows&type=show&showid=" + showid
 
 nextid = 0
-test = 0
 while True:
 	loadedPage = requests.get(landingurl + apiLink + "&nextid=" + str(nextid))
 	if loadedPage.text == 'DONE':
@@ -60,14 +56,6 @@ while True:
 				test+=1
 				break
 	nextid += 1
-
-# quality = "1080p"
-# for div in showsoup.find_all(class_="hs-shows"):
-# 	print(div)
-# 	for x in div.find_all(class_="link-1080p"):
-# 		print(x)
-# 		for y in x.find_all(class_="hs-magnet-link"):
-# 			print(y)
 
 
 """
