@@ -1,2 +1,2 @@
-CALL ".\Scripts\activate 
-python .\horriblesubsbatch.py"
+CALL .\Scripts\activate 
+python .\horriblesubsbatch.py
