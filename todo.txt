@@ -1,0 +1,9 @@
+batch number not updating when choosing other anime
+
+startep endep validation - startep cant be bigger than endep
+
+quality validation for batches
+
+batch download batches
+
+remove download button if batch only
