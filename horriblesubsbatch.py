@@ -5,7 +5,6 @@ from tkinter import ttk
 from tkinter import messagebox
 from bs4 import BeautifulSoup
 
-
 nameList = []
 hrefStrings = ""
 linksDict = {}
@@ -22,13 +21,24 @@ main.geometry("660x240")
 main.resizable(True, True)
 app = tk.Frame(main)
 app.grid()
+
+
 dlButton = ttk.Button(main, text="Download")
-dlButton.grid(row = 4, column = 0, sticky = "E")
+label3 = ttk.Label(app, text="Batches:")
+label4 = ttk.Label(app, text="Start Episode:")
+label5 = ttk.Label(app, text="End Episode:")
+dlButton.grid(row = 5, column = 0, sticky = "E")
+batchButton = ttk.Button(main, text="Batch Download", width=20)
+
 dropVar = tk.StringVar()
 qualityVar = tk.StringVar()
 sEpVar = tk.StringVar()
 eEpVar = tk.StringVar()
-	
+batchText = tk.StringVar()
+
+sEpDrop = ttk.Combobox(app, textvariable=sEpVar, width=6, state="readonly")
+eEpDrop = ttk.Combobox(app, textvariable=eEpVar, width=6, state="readonly")
+batchSelect = ttk.Combobox(app, textvariable=batchText, width=6, state="readonly")
 
 #======================================
 #Extracting series' links from page
@@ -99,61 +109,95 @@ def loadPage(*args):
 		messagebox.showerror("Error", "Invalid Series Name!!")
 
 	apiLink = "api.php?method=getshows&type=show&showid=" + showid
+
+	if requests.get(landingurl + apiLink).text == "There are no individual episodes for this show":
+		sEpDrop.grid_forget()
+		eEpDrop.grid_forget()
+		label4.grid_forget()
+		label5.grid_forget()
+		apiLink = "api.php?method=getshows&type=batch&showid=" + showid
+
+		while True:
+			loadedPage = requests.get(landingurl + apiLink + "&nextid=" + str(nextid))
+
+			if loadedPage.text == "There are no batches for this show yet":
+				if nextid == 0:
+					messagebox.showinfo("No Batches", "There are no batches for this show")
+				break
+
+			finalLoad += loadedPage.text
+			nextid += 1
+
+		return BeautifulSoup(finalLoad, features="html.parser"), True
+
 	while True:
 		loadedPage = requests.get(landingurl + apiLink + "&nextid=" + str(nextid))
 
-		if loadedPage.text == 'DONE':
+		if loadedPage.text == "DONE":
 			break
 
 		finalLoad += loadedPage.text
 		nextid += 1
 
-	return BeautifulSoup(finalLoad,features="html.parser")
+	return BeautifulSoup(finalLoad,features="html.parser"), False
 
 def loadEpisodes(*args):
-	global loadedSoup
-	episodeList = []
-	quality = loadQuality()
-	
-	loadedSoup = loadPage()
+		global loadedSoup
+		episodeList = []
+		quality = loadQuality()
+		
+		loadedSoup, batchOnly = loadPage()
+		
+		if batchOnly:
+			batchElements(loadedSoup)
 
-	batches = checkBatch()
-	
-	#======================================================
-	#Checks for number of episodes for the given series
-	#======================================================
-	for episodes in loadedSoup.find_all(class_="rls-info-container"):
-		episodeList.append(str(episodes["id"]))
+			qualityCheck(batch=True)
 
-	episodeList.reverse()
+			messagebox.showinfo("Batch Only", "There is only a batch download for this series")
+			displayBatchDownload()
+
+		else:
+			#======================================================
+			#Checks for number of episodes for the given series
+			#======================================================
+			for episodes in loadedSoup.find_all(class_="rls-info-container"):
+				episodeList.append(str(episodes["id"]))
+
+			episodeList.reverse()
 
 
-	#==============================
-	#Episode Selection Dropdowns
-	#==============================
-	label3 = ttk.Label(app, text="Start Episode:")
-	label3.grid(row = 2, column = 0, pady = 10, padx=10, sticky = "W")
-	sEpVar.set(str(episodeList[0]))
-	sEpDrop = ttk.Combobox(app, textvariable=sEpVar, values=episodeList, width=6, state="readonly")
-	sEpDrop.grid(row = 2, column = 1, sticky="W")
+			#==============================
+			#Episode Selection Dropdowns
+			#==============================
+			
+			label4.grid(row = 2, column = 0, pady = 10, padx=10, sticky = "W")
+			label5.grid(row = 3, column = 0, pady = 10, padx=10, sticky = "W")
 
-	label4 = ttk.Label(app, text="End Episode:")
-	label4.grid(row = 3, column = 0, pady = 10, padx=10, sticky = "W")
-	eEpVar.set(str(episodeList[-1]))
-	eEpDrop = ttk.Combobox(app, textvariable=eEpVar, values=episodeList, width=6, state="readonly")
-	eEpDrop.grid(row = 3, column = 1, sticky="W")
+			sEpVar.set(str(episodeList[0]))
+			sEpDrop["values"] = episodeList
+			sEpDrop.grid(row = 2, column = 1, sticky="W")
 
-	qualityCheck()
+			eEpVar.set(str(episodeList[-1]))
+			eEpDrop["values"] = episodeList
+			eEpDrop.grid(row = 3, column = 1, sticky="W")
 
-	if batches:
-		displayBatchDownload()
+			qualityCheck()
+
+			if checkBatch():
+				messagebox.showinfo("Batch Found!", "Batch Found! Please click on the 'Download Batch' button to start your batch download")
+				displayBatchDownload()
+
+			else:
+				label3.grid_forget()
+				batchButton.grid_forget()
+				batchSelect.grid_forget()
 
 
 def loadQuality(*args):
 	return qualityVar.get()
 
 
-def checkBatch(*args):
+def checkBatch():
 	showid = getShowID()
 
 	if not showid:
@@ -161,43 +205,86 @@ def checkBatch(*args):
 
 	apiLink = "api.php?method=getshows&type=batch&showid=" + showid
 
-	if "href" in requests.get(landingurl + apiLink).text:
+	url = requests.get(landingurl + apiLink)
+
+	if "href" in url.text:
+		batchSoup = BeautifulSoup(url.text, features="html.parser")
+		batchElements(batchSoup)
 		return True
 
 	return False
 
 
+def batchElements(loadedSoup):
+	batchList = []
+	for episodes in loadedSoup.find_all(class_="rls-info-container"):
+		batchList.append(str(episodes["id"]))
+
+	batchList.reverse()
+
+	label3.grid(row = 4, column = 0, pady = 10, padx=10, sticky = "W")
+
+	batchText.set(str(batchList[0]))
+	batchSelect["values"] = batchList
+	batchSelect.grid(row = 4, column = 1, sticky="W")
+
+
+
 def displayBatchDownload():
-	batchButton = ttk.Button(main, text="Batch Download", width=20)
-	batchButton.grid(row = 4, column = 0, padx=10, sticky = "W")
-	messagebox.showinfo("Batch Found!", "Batch Found! Please click on the 'Download Batch' button to start your batch download")
+	batchButton.grid(row = 5, column = 0, padx=10, sticky = "W")
+	batchButton.bind("<Button-1>", executeBatchLinks)
 
 
-def qualityCheck(*args):
+def qualityCheck(*args, batch=False):
 	validEpList = []
 	notDownloaded = []
-	qualityEpisodes = len(loadedSoup.find_all("div", class_="link-" + qualityVar.get()))
 
-	for validEpisodes in loadedSoup.find_all("div", class_="link-" + qualityVar.get()):
-		validEpList.append(str(int(validEpisodes["id"][:len(validEpisodes["id"]) - len(qualityVar.get()) - 1])))
+	qualityEpisodes = loadedSoup.find_all("div", class_="link-" + qualityVar.get())
+	noQualityEpisodes = len(qualityEpisodes)
 
-	for eachEpisode in range(int(sEpVar.get()), int(eEpVar.get()) + 1):
-		if str(eachEpisode) not in validEpList:
-			notDownloaded.append(eachEpisode)
+	if batch:
+		if noQualityEpisodes == 0:
+			messagebox.showinfo("Alert", "There are no batches in the given quality")
+		return
 
-	if int(eEpVar.get()) != qualityEpisodes:
-		if qualityEpisodes == 0:
+		for validBatches in qualityEpisodes:
+			validEpList.append(str(validBatches["id"][:len(validBatches["id"]) - len(qualityVar.get()) - 1]))
+
+		for eachBatch in loadedSoup.find_all(class_="rls-info-container"):
+			if eachBatch["id"] not in validEpList:
+				notDownloaded.append(eachBatch)
+
+		if len(loadedSoup.find_all(class_="rls-info-container")) != noQualityEpisodes:
+			messagebox.showinfo("Alert", "There are only " + str(noQualityEpisodes) + " batches in " + qualityVar.get() + ". Only batches with " + qualityVar.get() + " will be downloaded.")
+			messagebox.showinfo("Alert", "Batches that will not be downloaded: " + str(notDownloaded))
+
+	else:
+		if noQualityEpisodes == 0:
 			messagebox.showinfo("Alert", "There are no episodes in the given quality")
-			return
-		messagebox.showinfo("Alert", "There are only " + str(qualityEpisodes) + " episodes in " + qualityVar.get() + ". Only episodes with " + qualityVar.get() + " will be downloaded.")
-		messagebox.showinfo("Alert", "Episodes that will not be downloaded: " + str(notDownloaded))
+		return
+
+		for validEpisodes in qualityEpisodes:
+			validEpList.append(str(validEpisodes["id"][:len(validEpisodes["id"]) - len(qualityVar.get()) - 1]))
+
+		for eachEpisode in loadedSoup.find_all(class_="rls-info-container"):
+			if eachEpisode["id"] not in validEpList:
+				notDownloaded.append(eachEpisode)
+
+		if int(eEpVar.get()) - int(sEpVar.get()) + 1 != noQualityEpisodes:
+			messagebox.showinfo("Alert", "There are only " + str(noQualityEpisodes) + " episodes in " + qualityVar.get() + ". Only episodes with " + qualityVar.get() + " will be downloaded.")
+			messagebox.showinfo("Alert", "Episodes that will not be downloaded: " + str(notDownloaded))
+
 
 #======================================================
 #Obtaining magnet links from API call and execution
 #======================================================
 def executeMagnetLinks(event):
 	quality = loadQuality()
-	loadedSoup = loadPage()
+	loadedSoup, batchOnly = loadPage()
+
+	if batchOnly:
+		executeBatchLinks()
+		return
 
 	for span in loadedSoup.find_all(class_="link-" + qualityVar.get()):
 		for magnets in span.find_all(class_="hs-magnet-link"):
@@ -205,6 +292,19 @@ def executeMagnetLinks(event):
 				print("Success!")
 				# os.startfile(str(aTags["href"]))
 				break
+
+
+def executeBatchLinks(event):
+	quality = loadQuality()
+	loadedSoup, batchOnly = loadPage()
+	print("Fail!")
+	for span in loadedSoup.find_all(class_="link-" + qualityVar.get()):
+		for magnets in span.find_all(class_="hs-magnet-link"):
+			for aTags in magnets.find_all("a", href=True):
+				print("Success!")
+				# os.startfile(str(aTags["href"]))
+				break
+
 	
 dropVar.trace_add("write", loadEpisodes)
 qualityVar.trace_add("write", qualityCheck)
