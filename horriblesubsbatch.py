@@ -5,6 +5,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from bs4 import BeautifulSoup
 
+
 nameList = []
 hrefStrings = ""
 linksDict = {}
@@ -23,6 +24,10 @@ app = tk.Frame(main)
 app.grid()
 dlButton = ttk.Button(main, text="Download")
 dlButton.grid(row = 4, column = 0, sticky = "E")
+dropVar = tk.StringVar()
+qualityVar = tk.StringVar()
+sEpVar = tk.StringVar()
+eEpVar = tk.StringVar()
 
 #======================================
 #Extracting series' links from page
@@ -49,7 +54,6 @@ for name, link in linksDict.items():
 #===================
 label1 = ttk.Label(app, text = "Select Series:")
 label1.grid(column = 0, row = 0, pady = 10, sticky = "W")
-dropVar = tk.StringVar()
 dropVar.set(nameList[0])
 dropDown = ttk.Combobox(app, width = 66, textvariable = dropVar, values = nameList, state = "readonly")
 dropDown.grid(column = 1, row = 0)
@@ -60,9 +64,8 @@ dropDown.grid(column = 1, row = 0)
 #===================
 label2 = ttk.Label(app, text="Quality:")
 label2.grid(row = 1, column = 0, pady = 10, sticky = "W")
-qualityVar = tk.StringVar()
 qualityVar.set("1080p")
-qualityDrop = ttk.Combobox(app, textvariable=qualityVar, values=["1080p", "720p", "360p"], width=6, state="readonly")
+qualityDrop = ttk.Combobox(app, textvariable=qualityVar, values=["1080p", "720p", "480p","360p"], width=6, state="readonly")
 qualityDrop.grid(row = 1, column = 1, sticky="W")
 
 
@@ -109,6 +112,7 @@ def loadPage(*args):
 	return BeautifulSoup(finalLoad,features="html.parser")
 
 def loadEpisodes(*args):
+	global loadedSoup
 	episodeList = []
 	quality = loadQuality()
 	
@@ -129,20 +133,21 @@ def loadEpisodes(*args):
 	#==============================
 	label3 = ttk.Label(app, text="Start Episode:")
 	label3.grid(row = 2, column = 0, pady = 10, sticky = "W")
-	sEpVar = tk.StringVar()
 	sEpVar.set(str(episodeList[0]))
 	sEpDrop = ttk.Combobox(app, textvariable=sEpVar, values=episodeList, width=6, state="readonly")
 	sEpDrop.grid(row = 2, column = 1, sticky="W")
 
 	label4 = ttk.Label(app, text="End Episode:")
 	label4.grid(row = 3, column = 0, pady = 10, sticky = "W")
-	eEpVar = tk.StringVar()
 	eEpVar.set(str(episodeList[-1]))
 	eEpDrop = ttk.Combobox(app, textvariable=eEpVar, values=episodeList, width=6, state="readonly")
 	eEpDrop.grid(row = 3, column = 1, sticky="W")
 
+	qualityCheck()
+
 	if checkBatch():
 		displayBatchDownload()
+
 
 
 def loadQuality(*args):
@@ -164,8 +169,20 @@ def displayBatchDownload():
 	batchButton = ttk.Button(main, text="Batch Download", width=20)
 	batchButton.grid(row = 3, column = 0, sticky = "E")
 
-def qualityCheck():
-	return
+
+def qualityCheck(*args):
+	qualityEpisodes = len(loadedSoup.find_all("div", class_="link-" + qualityVar.get()))
+
+	for x in loadedSoup.find_all("div", class_="link-" + qualityVar.get()):
+		for y in range(sEpVar.get(), eEpVar.get()):
+
+	if int(eEpVar.get()) != qualityEpisodes:
+		if qualityEpisodes == 0:
+				messagebox.showinfo("Alert", "There are no episodes in the given quality")
+				return
+		messagebox.showinfo("Alert", "There are only " + str(qualityEpisodes) + " episodes in " + qualityVar.get() + ". Only episodes with " + qualityVar.get() + " will be downloaded.")
+
+
 #======================================================
 #Obtaining magnet links from API call and execution
 #======================================================
@@ -173,7 +190,7 @@ def executeMagnetLinks(event):
 	quality = loadQuality()
 	loadedSoup = loadPage()
 
-	for span in loadedSoup.find_all(class_="link-" + quality):
+	for span in loadedSoup.find_all(class_="link-" + qualityVar.get()):
 		for magnets in span.find_all(class_="hs-magnet-link"):
 			for aTags in magnets.find_all("a", href=True):
 				print("Success!")
@@ -181,7 +198,7 @@ def executeMagnetLinks(event):
 				break
 	
 dropVar.trace_add("write", loadEpisodes)
-qualityVar.trace_add("write", loadQuality)
+qualityVar.trace_add("write", qualityCheck)
 dlButton.bind("<Button-1>", executeMagnetLinks)
 
 main.mainloop()
