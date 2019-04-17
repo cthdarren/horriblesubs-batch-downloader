@@ -28,6 +28,7 @@ dropVar = tk.StringVar()
 qualityVar = tk.StringVar()
 sEpVar = tk.StringVar()
 eEpVar = tk.StringVar()
+	
 
 #======================================
 #Extracting series' links from page
@@ -53,17 +54,17 @@ for name, link in linksDict.items():
 #Series Dropdown
 #===================
 label1 = ttk.Label(app, text = "Select Series:")
-label1.grid(column = 0, row = 0, pady = 10, sticky = "W")
-dropVar.set(nameList[0])
+label1.grid(column = 0, row = 0, pady = 10, padx=10, sticky = "W")
+dropVar.set("Please Select...")
 dropDown = ttk.Combobox(app, width = 66, textvariable = dropVar, values = nameList, state = "readonly")
-dropDown.grid(column = 1, row = 0)
+dropDown.grid(column = 1, row = 0, columnspan=3)
 
 
 #===================
 #Quality Dropdown
 #===================
 label2 = ttk.Label(app, text="Quality:")
-label2.grid(row = 1, column = 0, pady = 10, sticky = "W")
+label2.grid(row = 1, column = 0, pady = 10, padx=10, sticky = "W")
 qualityVar.set("1080p")
 qualityDrop = ttk.Combobox(app, textvariable=qualityVar, values=["1080p", "720p", "480p","360p"], width=6, state="readonly")
 qualityDrop.grid(row = 1, column = 1, sticky="W")
@@ -116,7 +117,8 @@ def loadEpisodes(*args):
 	
 	loadedSoup = loadPage()
 
-
+	batches = checkBatch()
+	
 	#======================================================
 	#Checks for number of episodes for the given series
 	#======================================================
@@ -130,22 +132,21 @@ def loadEpisodes(*args):
 	#Episode Selection Dropdowns
 	#==============================
 	label3 = ttk.Label(app, text="Start Episode:")
-	label3.grid(row = 2, column = 0, pady = 10, sticky = "W")
+	label3.grid(row = 2, column = 0, pady = 10, padx=10, sticky = "W")
 	sEpVar.set(str(episodeList[0]))
 	sEpDrop = ttk.Combobox(app, textvariable=sEpVar, values=episodeList, width=6, state="readonly")
 	sEpDrop.grid(row = 2, column = 1, sticky="W")
 
 	label4 = ttk.Label(app, text="End Episode:")
-	label4.grid(row = 3, column = 0, pady = 10, sticky = "W")
+	label4.grid(row = 3, column = 0, pady = 10, padx=10, sticky = "W")
 	eEpVar.set(str(episodeList[-1]))
 	eEpDrop = ttk.Combobox(app, textvariable=eEpVar, values=episodeList, width=6, state="readonly")
 	eEpDrop.grid(row = 3, column = 1, sticky="W")
 
 	qualityCheck()
 
-	if checkBatch():
+	if batches:
 		displayBatchDownload()
-
 
 
 def loadQuality(*args):
@@ -154,10 +155,13 @@ def loadQuality(*args):
 
 def checkBatch(*args):
 	showid = getShowID()
-	apiLink = "api.php?method=getshows&type=batch&showid=" + showid
-	batchPage = requests.get(landingurl + apiLink)
 
-	if "href" in batchPage:
+	if not showid:
+		messagebox.showerror("Error", "Invalid Series Name!!")
+
+	apiLink = "api.php?method=getshows&type=batch&showid=" + showid
+
+	if "href" in requests.get(landingurl + apiLink).text:
 		return True
 
 	return False
@@ -165,7 +169,8 @@ def checkBatch(*args):
 
 def displayBatchDownload():
 	batchButton = ttk.Button(main, text="Batch Download", width=20)
-	batchButton.grid(row = 3, column = 0, sticky = "E")
+	batchButton.grid(row = 4, column = 0, padx=10, sticky = "W")
+	messagebox.showinfo("Batch Found!", "Batch Found! Please click on the 'Download Batch' button to start your batch download")
 
 
 def qualityCheck(*args):
@@ -185,7 +190,7 @@ def qualityCheck(*args):
 			messagebox.showinfo("Alert", "There are no episodes in the given quality")
 			return
 		messagebox.showinfo("Alert", "There are only " + str(qualityEpisodes) + " episodes in " + qualityVar.get() + ". Only episodes with " + qualityVar.get() + " will be downloaded.")
-		messagebox.showinfo("Alert", "Episodes that were not downloaded: " + str(notDownloaded))
+		messagebox.showinfo("Alert", "Episodes that will not be downloaded: " + str(notDownloaded))
 
 #======================================================
 #Obtaining magnet links from API call and execution
