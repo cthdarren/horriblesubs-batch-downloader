@@ -14,11 +14,8 @@ Setup should be as fast as double clicking on the batch file, as well as running
 
 ### Prerequisites
 
-Only thing required for this application to work
+Only thing required for this application to work is Python 3.7.x
 
-```
-Give examples
-```
 
 ### Installing
 
