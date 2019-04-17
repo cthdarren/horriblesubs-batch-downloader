@@ -18,7 +18,7 @@ landingurl = "https://horriblesubs.info/"
 #==========
 main = tk.Tk()
 main.title("HorribleSubs Magnet Downloader")
-main.geometry("510x190")
+main.geometry("660x240")
 main.resizable(True, True)
 app = tk.Frame(main)
 app.grid()
@@ -84,8 +84,6 @@ def getShowID():
 			return tag.text[16:-1]
 
 	return false
-			 
-
 
 
 #======================================================
@@ -171,17 +169,23 @@ def displayBatchDownload():
 
 
 def qualityCheck(*args):
+	validEpList = []
+	notDownloaded = []
 	qualityEpisodes = len(loadedSoup.find_all("div", class_="link-" + qualityVar.get()))
 
-	for x in loadedSoup.find_all("div", class_="link-" + qualityVar.get()):
-		for y in range(sEpVar.get(), eEpVar.get()):
+	for validEpisodes in loadedSoup.find_all("div", class_="link-" + qualityVar.get()):
+		validEpList.append(str(int(validEpisodes["id"][:len(validEpisodes["id"]) - len(qualityVar.get()) - 1])))
+
+	for eachEpisode in range(int(sEpVar.get()), int(eEpVar.get()) + 1):
+		if str(eachEpisode) not in validEpList:
+			notDownloaded.append(eachEpisode)
 
 	if int(eEpVar.get()) != qualityEpisodes:
 		if qualityEpisodes == 0:
-				messagebox.showinfo("Alert", "There are no episodes in the given quality")
-				return
+			messagebox.showinfo("Alert", "There are no episodes in the given quality")
+			return
 		messagebox.showinfo("Alert", "There are only " + str(qualityEpisodes) + " episodes in " + qualityVar.get() + ". Only episodes with " + qualityVar.get() + " will be downloaded.")
-
+		messagebox.showinfo("Alert", "Episodes that were not downloaded: " + str(notDownloaded))
 
 #======================================================
 #Obtaining magnet links from API call and execution
