@@ -9,7 +9,7 @@ This project was started because I was too lazy to click each and every link for
  - Easy to use GUI
  
  ### Planned Features 
- - Episode range selection
+ - Episode range selection (Episode range does not work at the moment)
  - Best quality option
  
 ## Setup
