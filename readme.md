@@ -8,7 +8,7 @@ This project was started because I was too lazy to click each and every link for
  - Batch download if available
  - Easy to use GUI
  
- ### Planned Features for The Future
+ ### Planned Features 
  - Episode range selection
  - Best quality option
  
