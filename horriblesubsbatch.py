@@ -338,7 +338,7 @@ def executeBatchLinks(event):
 		magnet = batches.find(class_="hs-magnet-link")
 		aTag = magnet.find("a", href=True)
 		# print("Success!")
-		os.startfile(str(aTags["href"]))
+		os.startfile(str(aTag["href"]))
 
 	else:
 		messagebox.showerror("Quality Invalid", "There doesn't exist a batch for the given quality")
