@@ -318,8 +318,8 @@ def executeMagnetLinks(event):
 		for span in loadedSoup.find_all(class_="link-" + qualityVar.get()):
 			for magnets in span.find_all(class_="hs-magnet-link"):
 				for aTags in magnets.find_all("a", href=True):
-					print("Success!")
-					# os.startfile(str(aTags["href"]))
+					# print("Success!")
+					os.startfile(str(aTags["href"]))
 					break
 
 
@@ -337,8 +337,8 @@ def executeBatchLinks(event):
 	if batches:
 		magnet = batches.find(class_="hs-magnet-link")
 		aTag = magnet.find("a", href=True)
-		print("Success!")
-		# os.startfile(str(aTags["href"]))
+		# print("Success!")
+		os.startfile(str(aTags["href"]))
 
 	else:
 		messagebox.showerror("Quality Invalid", "There doesn't exist a batch for the given quality")
