@@ -5,7 +5,7 @@
 This project was started because I was too lazy to click each and every link for anime with no batch downloads. 
 ### Features
  - Resolution Selection
- - Episode Range Selection
+ - ~~Episode Range Selection~~ (Future Update)
  - Batch download if available
  - Easy to use GUI
  
