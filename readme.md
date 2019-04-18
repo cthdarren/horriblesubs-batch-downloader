@@ -5,9 +5,12 @@
 This project was started because I was too lazy to click each and every link for anime with no batch downloads. 
 ### Features
  - Resolution Selection
- - Episode Range Selection
  - Batch download if available
  - Easy to use GUI
+ 
+ ### Planned Features 
+ - Episode range selection (Episode range does not work at the moment)
+ - Best quality option
  
 ## Setup
 Setup should be as fast as double clicking on the batch file, as well as running the application
