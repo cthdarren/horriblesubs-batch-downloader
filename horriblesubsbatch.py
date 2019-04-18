@@ -22,22 +22,27 @@ main.resizable(True, True)
 app = tk.Frame(main)
 app.grid()
 
-
-dlButton = ttk.Button(main, text="Download")
 label3 = ttk.Label(app, text="Batches:")
 label4 = ttk.Label(app, text="Start Episode:")
 label5 = ttk.Label(app, text="End Episode:")
-batchButton = ttk.Button(main, text="Batch Download", width=20)
+label6 = ttk.Label(app, text="Best Quality:")
 
 dropVar = tk.StringVar()
 qualityVar = tk.StringVar()
 sEpVar = tk.StringVar()
 eEpVar = tk.StringVar()
 batchText = tk.StringVar()
+bestQCheck = tk.IntVar()
 
+dlButton = ttk.Button(main, text="Download")
+batchButton = ttk.Button(main, text="Batch Download", width=20)
+bestButton = ttk.Checkbutton(app, variable="bestQCheck", state="active")
 sEpDrop = ttk.Combobox(app, textvariable=sEpVar, width=6, state="readonly")
 eEpDrop = ttk.Combobox(app, textvariable=eEpVar, width=6, state="readonly")
 batchSelect = ttk.Combobox(app, textvariable=batchText, width=6, state="readonly")
+
+label6.grid(column = 1, row = 1, pady = 10, padx = 10, sticky = "E")
+bestButton.grid(column = 2, row = 1, sticky = "W")
 
 #======================================
 #Extracting series' links from page
@@ -192,7 +197,7 @@ def loadEpisodes(*args):
 				batchButton.grid_forget()
 				batchSelect.grid_forget()
 
-			dlButton.grid(row = 5, column = 0, sticky = "E")
+			dlButton.grid(row = 6, column = 0, sticky = "E")
 
 
 def checkBatch():
@@ -233,7 +238,7 @@ def batchElements(loadedSoup):
 
 
 def displayBatchDownload():
-	batchButton.grid(row = 5, column = 0, padx=10, sticky = "W")
+	batchButton.grid(row = 6, column = 0, padx=10, sticky = "W")
 	batchButton.bind("<Button-1>", executeBatchLinks)
 
 
@@ -280,6 +285,7 @@ def qualityCheck(*args, batch=False, soup=loadedSoup):
 
 		return True
 
+
 def buttonQualityCheck(*args):
 	validEpList = []
 	notDownloaded = []
@@ -301,7 +307,6 @@ def buttonQualityCheck(*args):
 	if len(loadedSoup.find_all(class_="rls-info-container")) != noQualityEpisodes:
 		messagebox.showinfo("Alert", "There are only " + str(noQualityEpisodes) + " episodes in " + qualityVar.get() + ". Only episodes in " + qualityVar.get() + " will be downloaded.")
 		messagebox.showinfo("Alert", "Episodes that will not be downloaded: " + str(notDownloaded))
-
 
 
 #======================================================
