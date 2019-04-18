@@ -299,7 +299,7 @@ def buttonQualityCheck(*args):
 			notDownloaded.append(eachEpisode["id"])
 
 	if len(loadedSoup.find_all(class_="rls-info-container")) != noQualityEpisodes:
-		messagebox.showinfo("Alert", "There are only " + str(noQualityEpisodes) + " episodes in " + qualityVar.get() + ". Only episodes with " + qualityVar.get() + " will be downloaded.")
+		messagebox.showinfo("Alert", "There are only " + str(noQualityEpisodes) + " episodes in " + qualityVar.get() + ". Only episodes in " + qualityVar.get() + " will be downloaded.")
 		messagebox.showinfo("Alert", "Episodes that will not be downloaded: " + str(notDownloaded))
 
 
