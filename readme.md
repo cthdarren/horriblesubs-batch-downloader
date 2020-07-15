@@ -11,6 +11,7 @@ This project was started because I was too lazy to click each and every link for
  ### Planned Features 
  - Episode range selection (Episode range does not work at the moment)
  - Best quality option
+ - Make the dropdown also a search bar
  
 ## Setup
 Setup should be as fast as double clicking on the batch file, as well as running the application
