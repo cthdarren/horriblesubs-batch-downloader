@@ -10,7 +10,7 @@ nameList = []
 hrefStrings = ""
 linksDict = {}
 landingurl = "https://horriblesubs.info/"
-
+episodeList = []
 
 #==========
 #Init GUI
@@ -22,22 +22,28 @@ main.resizable(True, True)
 app = tk.Frame(main)
 app.grid()
 
-
-dlButton = ttk.Button(main, text="Download")
 label3 = ttk.Label(app, text="Batches:")
 label4 = ttk.Label(app, text="Start Episode:")
 label5 = ttk.Label(app, text="End Episode:")
-batchButton = ttk.Button(main, text="Batch Download", width=20)
+label6 = ttk.Label(app, text="Best Quality:")
 
 dropVar = tk.StringVar()
 qualityVar = tk.StringVar()
 sEpVar = tk.StringVar()
 eEpVar = tk.StringVar()
 batchText = tk.StringVar()
+bestQCheck = tk.IntVar()
+bestQCheck.set(1)
 
+dlButton = ttk.Button(main, text="Download")
+batchButton = ttk.Button(main, text="Batch Download", width=20)
+bestButton = ttk.Checkbutton(app, variable=bestQCheck,)
 sEpDrop = ttk.Combobox(app, textvariable=sEpVar, width=6, state="readonly")
 eEpDrop = ttk.Combobox(app, textvariable=eEpVar, width=6, state="readonly")
 batchSelect = ttk.Combobox(app, textvariable=batchText, width=6, state="readonly")
+
+label6.grid(column = 1, row = 1, pady = 10, padx = 10, sticky = "E")
+bestButton.grid(column = 2, row = 1, sticky = "W")
 
 #======================================
 #Extracting series' links from page
@@ -143,8 +149,8 @@ def loadPage(*args):
 
 def loadEpisodes(*args):
 		global loadedSoup
+		global episodeList
 		episodeList = []
-		
 		loadedSoup, batchOnly = loadPage()
 		
 		if batchOnly:
@@ -192,7 +198,7 @@ def loadEpisodes(*args):
 				batchButton.grid_forget()
 				batchSelect.grid_forget()
 
-			dlButton.grid(row = 5, column = 0, sticky = "E")
+			dlButton.grid(row = 6, column = 0, sticky = "E")
 
 
 def checkBatch():
@@ -233,7 +239,7 @@ def batchElements(loadedSoup):
 
 
 def displayBatchDownload():
-	batchButton.grid(row = 5, column = 0, padx=10, sticky = "W")
+	batchButton.grid(row = 6, column = 0, padx=10, sticky = "W")
 	batchButton.bind("<Button-1>", executeBatchLinks)
 
 
@@ -280,6 +286,7 @@ def qualityCheck(*args, batch=False, soup=loadedSoup):
 
 		return True
 
+
 def buttonQualityCheck(*args):
 	validEpList = []
 	notDownloaded = []
@@ -303,6 +310,29 @@ def buttonQualityCheck(*args):
 		messagebox.showinfo("Alert", "Episodes that will not be downloaded: " + str(notDownloaded))
 
 
+#=================================================
+# Episode range selection functions
+#=================================================
+
+#Onchange of start Ep value
+def validateEndEp(*args):
+	global episodeList
+	
+	if episodeList.index(str(eEpVar.get())) <= episodeList.index(str(sEpVar.get())):
+		eEpVar.set(str(sEpVar.get()))
+
+	startEpIndex = episodeList.index(str(sEpVar.get()))
+	eEpDrop["values"] = episodeList[startEpIndex:]
+
+
+#Onchange of end Ep value
+def validateStartEp(*args):
+	global episodeList
+	
+	#index needs to be +1 because you want to be able to download just one episode (eg. startEp = 08 endEp = 08)
+	endEpIndex = episodeList.index(str(eEpVar.get())) + 1
+	sEpDrop["values"] = episodeList[:endEpIndex]
+
 
 #======================================================
 #Obtaining magnet links from API call and execution
@@ -315,12 +345,18 @@ def executeMagnetLinks(event):
 			executeBatchLinks()
 			return
 
-		for span in loadedSoup.find_all(class_="link-" + qualityVar.get()):
-			for magnets in span.find_all(class_="hs-magnet-link"):
-				for aTags in magnets.find_all("a", href=True):
-					# print("Success!")
-					os.startfile(str(aTags["href"]))
-					break
+		startEpRange = episodeList.index(sEpVar.get())
+		endEpRange = episodeList.index(eEpVar.get()) + 1
+		episodeRangeList = episodeList[startEpRange:endEpRange]
+		
+		for episode in episodeRangeList:
+			for div in loadedSoup.find_all(id=episode):
+				for span in div.find_all(class_="link-" + qualityVar.get()):
+					for magnets in span.find_all(class_="hs-magnet-link"):
+						for aTags in magnets.find_all("a", href=True):
+							# print("Success!")
+							os.startfile(str(aTags["href"]))
+							break
 
 
 def executeBatchLinks(event):
@@ -347,5 +383,7 @@ def executeBatchLinks(event):
 dropVar.trace_add("write", loadEpisodes)
 qualityVar.trace_add("write", buttonQualityCheck)
 dlButton.bind("<Button-1>", executeMagnetLinks)
+sEpVar.trace_add("write", validateEndEp)
+eEpVar.trace_add("write", validateStartEp)
 
 main.mainloop()
