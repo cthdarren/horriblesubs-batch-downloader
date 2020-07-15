@@ -345,14 +345,18 @@ def executeMagnetLinks(event):
 			executeBatchLinks()
 			return
 
-		episodeRangeList = episodeList[episodeList.index(sEpVar.get()):episodeList.index(eEpVar.get())]
-		print(episodeRangeList)
-		for span in loadedSoup.find_all(class_="link-" + qualityVar.get()):
-			for magnets in span.find_all(class_="hs-magnet-link"):
-				for aTags in magnets.find_all("a", href=True):
-					# print("Success!")
-					#os.startfile(str(aTags["href"]))
-					break
+		startEpRange = episodeList.index(sEpVar.get())
+		endEpRange = episodeList.index(eEpVar.get()) + 1
+		episodeRangeList = episodeList[startEpRange:endEpRange]
+		
+		for episode in episodeRangeList:
+			for div in loadedSoup.find_all(id=episode):
+				for span in div.find_all(class_="link-" + qualityVar.get()):
+					for magnets in span.find_all(class_="hs-magnet-link"):
+						for aTags in magnets.find_all("a", href=True):
+							# print("Success!")
+							os.startfile(str(aTags["href"]))
+							break
 
 
 def executeBatchLinks(event):
