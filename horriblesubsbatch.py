@@ -10,7 +10,7 @@ nameList = []
 hrefStrings = ""
 linksDict = {}
 landingurl = "https://horriblesubs.info/"
-
+episodeList = []
 
 #==========
 #Init GUI
@@ -148,7 +148,7 @@ def loadPage(*args):
 
 def loadEpisodes(*args):
 		global loadedSoup
-		episodeList = []
+		global episodeList
 		
 		loadedSoup, batchOnly = loadPage()
 		
@@ -309,6 +309,30 @@ def buttonQualityCheck(*args):
 		messagebox.showinfo("Alert", "Episodes that will not be downloaded: " + str(notDownloaded))
 
 
+#=================================================
+# Episode range selection functions
+#=================================================
+
+#Onchange of start Ep value
+def validateEndEp(*args):
+	global episodeList
+	
+	if episodeList.index(str(eEpVar.get())) <= episodeList.index(str(sEpVar.get())):
+		eEpVar.set(str(sEpVar.get()))
+
+	startEpIndex = episodeList.index(str(sEpVar.get()))
+	eEpDrop["values"] = episodeList[startEpIndex:]
+
+
+#Onchange of end Ep value
+def validateStartEp(*args):
+	global episodeList
+	
+	#index needs to be +1 because you want to be able to download just one episode (eg. startEp = 08 endEp = 08)
+	endEpIndex = episodeList.index(str(eEpVar.get())) + 1
+	sEpDrop["values"] = episodeList[:endEpIndex]
+
+
 #======================================================
 #Obtaining magnet links from API call and execution
 #======================================================
@@ -352,5 +376,7 @@ def executeBatchLinks(event):
 dropVar.trace_add("write", loadEpisodes)
 qualityVar.trace_add("write", buttonQualityCheck)
 dlButton.bind("<Button-1>", executeMagnetLinks)
+sEpVar.trace_add("write", validateEndEp)
+eEpVar.trace_add("write", validateStartEp)
 
 main.mainloop()
