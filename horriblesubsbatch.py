@@ -150,7 +150,7 @@ def loadPage(*args):
 def loadEpisodes(*args):
 		global loadedSoup
 		global episodeList
-		
+		episodeList = []
 		loadedSoup, batchOnly = loadPage()
 		
 		if batchOnly:
@@ -345,11 +345,13 @@ def executeMagnetLinks(event):
 			executeBatchLinks()
 			return
 
+		episodeRangeList = episodeList[episodeList.index(sEpVar.get()):episodeList.index(eEpVar.get())]
+		print(episodeRangeList)
 		for span in loadedSoup.find_all(class_="link-" + qualityVar.get()):
 			for magnets in span.find_all(class_="hs-magnet-link"):
 				for aTags in magnets.find_all("a", href=True):
 					# print("Success!")
-					os.startfile(str(aTags["href"]))
+					#os.startfile(str(aTags["href"]))
 					break
 
 
