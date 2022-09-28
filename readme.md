@@ -1,3 +1,9 @@
+# RIP HorribleSubs, you carried my anime journey in my early days
+
+![ded](https://cdn.discordapp.com/attachments/750440267232051271/1024641035973972038/unknown.png)
+
+
+
 
 
 # HorribleSubs Batch Downloader
